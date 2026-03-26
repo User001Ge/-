@@ -10,7 +10,6 @@ ga_tracking_code = """
   gtag('config', 'G-Y5NQPPCSPS');
 </script>
 """
-
 components.html(ga_tracking_code, width=0, height=0)
 from __future__ import annotations
 
