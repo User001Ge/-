@@ -42,7 +42,7 @@ def inject_google_analytics(measurement_id: str) -> None:
         components.html(ga_code, height=0, width=0)
 
 
-st.set_page_config(page_title="არჩევნების სიმულატორი", page_icon="🗳️", layout="wide")
+st.set_page_config(page_title="ვინ გახდება პატრიარქი?", page_icon="🗳️", layout="wide")
 inject_google_analytics(GA_MEASUREMENT_ID)
 
 st.markdown(
