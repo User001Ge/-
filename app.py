@@ -81,8 +81,9 @@ def render_bar_chart(
     title: str,
     y_max: float | None = None,
     bar_width: float = 0.5,
+    figsize: tuple[float, float] = (5.5, 3.5),
 ):
-    fig, ax = plt.subplots(figsize=(5.5, 3.5), dpi=120)
+    fig, ax = plt.subplots(figsize=figsize, dpi=120)
     colors = BAR_COLORS[: len(df)]
     bars = ax.bar(df[category_col], df[value_col], color=colors, width=bar_width)
 
@@ -244,6 +245,7 @@ with right:
         "პირველი ტურის ხმები",
         y_max=39,
         bar_width=0.45,
+        figsize=(4.2, 3.4),
     )
 
 if single_result["runoff_required"]:
@@ -266,7 +268,8 @@ if single_result["runoff_required"]:
                 "კანდიდატი",
                 "ხმები",
                 "მეორე ტურის ხმები",
-                bar_width=0.45,
+                bar_width=0.40,
+                figsize=(3.4, 3.2),
             )
 
 st.subheader("საბოლოო გამარჯვების ალბათობები")
@@ -282,34 +285,13 @@ render_bar_chart(
     "მოგების ალბათობა (%)",
     "საბოლოო გამარჯვების ალბათობები",
     bar_width=0.45,
+    figsize=(4.3, 4.0),
 )
 
 st.subheader("Monte Carlo დამატებითი მაჩვენებლები")
 mc1, mc2 = st.columns(2)
 mc1.metric("საშუალო დასწრება", monte_carlo_result["avg_attendance"])
 mc2.metric("მეორე ტურის დანიშვნის სიხშირე", f"{monte_carlo_result['runoff_rate_pct']:.2f}%")
-
-st.markdown("### პირველივე ტურში გამარჯვების ალბათობა")
-first_round_win_df = monte_carlo_result["first_round_win_df"]
-st.dataframe(first_round_win_df, use_container_width=True, hide_index=True)
-render_bar_chart(
-    first_round_win_df,
-    "კანდიდატი",
-    "პირველივე ტურში გამარჯვება (%)",
-    "პირველივე ტურში გამარჯვების ალბათობა",
-    bar_width=0.45,
-)
-
-st.markdown("### პირველი ტურის საშუალო ხმები და მეორე ტურში გასვლის სიხშირე")
-avg_votes_df = monte_carlo_result["average_votes_df"]
-st.dataframe(avg_votes_df, use_container_width=True, hide_index=True)
-render_bar_chart(
-    avg_votes_df,
-    "კანდიდატი",
-    "პირველი ტურის საშუალო ხმები",
-    "პირველი ტურის საშუალო ხმები",
-    bar_width=0.45,
-)
 
 with st.expander("პირველი ტურის სრული ცხრილი"):
     st.dataframe(first_round["details_df"], use_container_width=True, hide_index=True)
