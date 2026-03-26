@@ -49,7 +49,7 @@ def totals_to_df(vote_totals: dict[str, int], value_label: str = "ხმებ�
 
 
 def render_bar_chart(df: pd.DataFrame, category_col: str, value_col: str, title: str):
-    fig, ax = plt.subplots(figsize=(7.5, 2.8))
+    fig, ax = plt.subplots(figsize=(5.5, 3.5))
     colors = BAR_COLORS[: len(df)]
     bars = ax.bar(df[category_col], df[value_col], color=colors)
     ax.set_title(title)
