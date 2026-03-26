@@ -15,6 +15,10 @@ from election_engine import (
 )
 
 GA_MEASUREMENT_ID = "G-Y5NQPPCSPS"
+MAX_VOTERS = 39
+
+PRIMARY_COLORS = ["#1f77b4", "#ff7f0e", "#2ca02c"]
+PROBABILITY_COLORS = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd"]
 
 
 def inject_google_analytics(measurement_id: str) -> None:
@@ -41,19 +45,54 @@ def inject_google_analytics(measurement_id: str) -> None:
 st.set_page_config(page_title="არჩევნების სიმულატორი", page_icon="🗳️", layout="wide")
 inject_google_analytics(GA_MEASUREMENT_ID)
 
+st.markdown(
+    """
+    <style>
+    div[data-testid="stMetric"] {
+        background-color: #f8fafc;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 12px 14px;
+    }
+
+    div[data-testid="stMetricValue"] {
+        font-weight: 700;
+    }
+
+    .winner-card {
+        background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+        border: 2px solid #fb923c;
+        border-radius: 16px;
+        padding: 18px 20px;
+        margin-bottom: 16px;
+        box-shadow: 0 4px 14px rgba(251, 146, 60, 0.18);
+    }
+
+    .winner-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #9a3412;
+        margin-bottom: 6px;
+    }
+
+    .winner-name {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: #7c2d12;
+        line-height: 1.15;
+    }
+
+    .winner-subtext {
+        margin-top: 8px;
+        font-size: 0.95rem;
+        color: #9a3412;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 DATA_FILE = Path(__file__).parent / "data" / "preferences.xlsx"
-BAR_COLORS = [
-    "tab:blue",
-    "tab:orange",
-    "tab:green",
-    "tab:red",
-    "tab:purple",
-    "tab:brown",
-    "tab:pink",
-    "tab:gray",
-    "tab:olive",
-    "tab:cyan",
-]
 
 
 @st.cache_data(show_spinner=False)
@@ -74,50 +113,89 @@ def totals_to_df(vote_totals: dict[str, int], value_label: str = "ხმებ�
     return pd.DataFrame({"კანდიდატი": list(vote_totals.keys()), value_label: list(vote_totals.values())})
 
 
-def render_bar_chart(
+def _style_axes(ax, title: str, x_label: str, y_label: str) -> None:
+    ax.set_title(title, fontsize=13, fontweight="bold", pad=12)
+    ax.set_xlabel(x_label, fontsize=10)
+    ax.set_ylabel(y_label, fontsize=10)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.grid(axis="y", linestyle="--", alpha=0.28)
+    ax.set_axisbelow(True)
+    ax.tick_params(axis="x", rotation=18, labelsize=10)
+    ax.tick_params(axis="y", labelsize=9)
+
+
+def render_vote_chart(
     df: pd.DataFrame,
     category_col: str,
     value_col: str,
     title: str,
     y_max: float | None = None,
-    bar_width: float = 0.5,
-    figsize: tuple[float, float] = (5.5, 3.5),
+    bar_width: float = 0.56,
+    figsize: tuple[float, float] = (7.0, 4.15),
 ):
     fig, ax = plt.subplots(figsize=figsize, dpi=120)
-    colors = BAR_COLORS[: len(df)]
+
+    colors = PRIMARY_COLORS[: len(df)]
     bars = ax.bar(df[category_col], df[value_col], color=colors, width=bar_width)
 
-    ax.set_title(title)
-    ax.set_xlabel(category_col)
-    ax.set_ylabel(value_col)
+    _style_axes(ax, title, category_col, value_col)
 
-    if y_max is not None:
-        ax.set_ylim(0, y_max)
-        label_offset = max(y_max * 0.01, 0.15)
-    else:
-        computed_y_max = max(float(df[value_col].max()) + 1, 1)
-        ax.set_ylim(0, computed_y_max)
-        label_offset = max(computed_y_max * 0.01, 0.05)
+    upper = y_max if y_max is not None else max(float(df[value_col].max()) + 1, 1)
+    ax.set_ylim(0, upper)
+    ax.margins(x=0.08)
 
-    ax.margins(x=0.15)
-    plt.xticks(rotation=25, ha="right")
-
-    upper_limit = ax.get_ylim()[1]
+    label_offset = max(upper * 0.012, 0.12)
     for bar, value in zip(bars, df[value_col]):
-        label_y = value + label_offset
+        text_y = value + label_offset
         va = "bottom"
-
-        if label_y >= upper_limit:
-            label_y = value - label_offset
+        if text_y >= upper:
+            text_y = value - label_offset
             va = "top"
-
         ax.text(
             bar.get_x() + bar.get_width() / 2,
-            label_y,
+            text_y,
             f"{value}",
             ha="center",
             va=va,
+            fontsize=10,
+            fontweight="bold",
+        )
+
+    fig.tight_layout()
+    st.pyplot(fig)
+    plt.close(fig)
+
+
+def render_probability_chart(
+    df: pd.DataFrame,
+    category_col: str,
+    value_col: str,
+    title: str,
+    bar_width: float = 0.54,
+    figsize: tuple[float, float] = (7.0, 4.0),
+):
+    fig, ax = plt.subplots(figsize=figsize, dpi=120)
+
+    colors = PROBABILITY_COLORS[: len(df)]
+    bars = ax.bar(df[category_col], df[value_col], color=colors, width=bar_width)
+
+    _style_axes(ax, title, category_col, value_col)
+
+    upper = max(float(df[value_col].max()) * 1.15, 1.0)
+    ax.set_ylim(0, upper)
+    ax.margins(x=0.08)
+
+    label_offset = max(upper * 0.012, 0.18)
+    for bar, value in zip(bars, df[value_col]):
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            value + label_offset,
+            f"{value:.2f}%",
+            ha="center",
+            va="bottom",
             fontsize=9,
+            fontweight="bold",
         )
 
     fig.tight_layout()
@@ -213,10 +291,28 @@ except Exception as exc:
     st.stop()
 
 st.subheader("ერთი კონკრეტული გაშვების დეტალები")
-col1, col2, col3 = st.columns(3)
-col1.metric("საბოლოო შედეგი", single_result["winner"])
-col2.metric("დასწრება", single_result["attendance_count"])
-col3.metric("გაცდენა", single_result["absence_count"])
+
+winner_text = single_result["winner"]
+winner_note = (
+    "პირველივე ტურში დაფიქსირდა გამარჯვება."
+    if not single_result["runoff_required"]
+    else "გამარჯვებული გამოვლინდა მეორე ტურის შემდეგ."
+)
+
+st.markdown(
+    f"""
+    <div class="winner-card">
+        <div class="winner-label">საბოლოო შედეგი</div>
+        <div class="winner-name">{winner_text}</div>
+        <div class="winner-subtext">{winner_note}</div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+col1, col2 = st.columns(2)
+col1.metric("დასწრება", single_result["attendance_count"])
+col2.metric("გაცდენა", single_result["absence_count"])
 
 if single_result["absent_candidates"]:
     st.write("**გაცდენილი კანდიდატები:**", ", ".join(single_result["absent_candidates"]))
@@ -234,18 +330,18 @@ fr_col3.metric(
 )
 
 first_vote_df = totals_to_df(first_round["vote_totals"])
-left, right = st.columns([1, 1])
+left, right = st.columns([0.9, 1.3])
 with left:
-    st.dataframe(first_vote_df, use_container_width=True, hide_index=True)
+    st.table(first_vote_df.set_index("კანდიდატი"))
 with right:
-    render_bar_chart(
+    render_vote_chart(
         first_vote_df,
         "კანდიდატი",
         "ხმები",
         "პირველი ტურის ხმები",
-        y_max=39,
-        bar_width=0.45,
-        figsize=(4.2, 3.4),
+        y_max=MAX_VOTERS,
+        bar_width=0.58,
+        figsize=(7.2, 4.2),
     )
 
 if single_result["runoff_required"]:
@@ -259,34 +355,40 @@ if single_result["runoff_required"]:
         ro_col1, ro_col2 = st.columns(2)
         ro_col1.metric("მეორე ტურის ვალიდური ხმები", runoff["valid_votes"])
         ro_col2.metric("მეორე ტურის შედეგი", single_result["winner"])
-        left, right = st.columns([1, 1])
+
+        left, right = st.columns([0.85, 1.15])
         with left:
-            st.dataframe(runoff_df, use_container_width=True, hide_index=True)
+            st.table(runoff_df.set_index("კანდიდატი"))
         with right:
-            render_bar_chart(
+            render_vote_chart(
                 runoff_df,
                 "კანდიდატი",
                 "ხმები",
                 "მეორე ტურის ხმები",
-                bar_width=0.40,
-                figsize=(3.4, 3.2),
+                y_max=max(float(runoff_df["ხმები"].max()) + 1, 1),
+                bar_width=0.52,
+                figsize=(6.4, 3.9),
             )
 
 st.subheader("საბოლოო გამარჯვების ალბათობები")
 probabilities_df = monte_carlo_result["probabilities_df"]
+
 metrics_cols = st.columns(len(probabilities_df))
 for col, (_, row) in zip(metrics_cols, probabilities_df.iterrows()):
     col.metric(row["შედეგი"], f"{row['მოგების ალბათობა (%)']:.2f}%")
 
-st.dataframe(probabilities_df, use_container_width=True, hide_index=True)
-render_bar_chart(
-    probabilities_df,
-    "შედეგი",
-    "მოგების ალბათობა (%)",
-    "საბოლოო გამარჯვების ალბათობები",
-    bar_width=0.45,
-    figsize=(4.3, 4.0),
-)
+left, right = st.columns([1.08, 0.92])
+with left:
+    st.table(probabilities_df.set_index("შედეგი"))
+with right:
+    render_probability_chart(
+        probabilities_df,
+        "შედეგი",
+        "მოგების ალბათობა (%)",
+        "საბოლოო გამარჯვების ალბათობები",
+        bar_width=0.56,
+        figsize=(7.2, 4.0),
+    )
 
 st.subheader("Monte Carlo დამატებითი მაჩვენებლები")
 mc1, mc2 = st.columns(2)
