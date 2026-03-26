@@ -74,7 +74,7 @@ def inject_google_analytics(measurement_id: str) -> None:
       </body>
     </html>
     """
-    components.html(ga_tracking_code, height=0, width=0)
+   st.html(ga_code, unsafe_allow_javascript=True)
 
 from data_loader import PreferenceFileError, load_model_from_excel
 from election_engine import (
