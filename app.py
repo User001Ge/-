@@ -1,3 +1,17 @@
+import streamlit as st
+import streamlit.components.v1 as components
+
+ga_tracking_code = """
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-Y5NQPPCSPS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-Y5NQPPCSPS');
+</script>
+"""
+
+components.html(ga_tracking_code, width=0, height=0)
 from __future__ import annotations
 
 from pathlib import Path
