@@ -55,8 +55,17 @@ st.markdown(
         padding: 12px 14px;
     }
 
+    div[data-testid="stMetric"] label,
+    div[data-testid="stMetric"] p,
+    div[data-testid="stMetric"] span,
+    div[data-testid="stMetric"] div:not([data-testid="stMetricValue"]),
+    div[data-testid="stMetricLabel"] {
+        color: #475569 !important;
+    }
+
     div[data-testid="stMetricValue"] {
         font-weight: 700;
+        color: #0f172a !important;
     }
 
     .winner-card {
