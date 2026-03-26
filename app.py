@@ -7,74 +7,17 @@ import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
 
+from data_loader import PreferenceFileError, load_model_from_excel
+from election_engine import (
+    SimulationParameters,
+    run_monte_carlo,
+    run_single_simulation,
+)
+
 GA_MEASUREMENT_ID = "G-Y5NQPPCSPS"
 
 
 def inject_google_analytics(measurement_id: str) -> None:
-    ga_tracking_code = f"""
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta charset="utf-8" />
-        <script async src="https://www.googletagmanager.com/gtag/js?id={measurement_id}"></script>
-      </head>
-      <body>
-        <script>
-          (function() {{
-            const measurementId = {measurement_id!r};
-            const initKey = `ga4_initialized_${{measurementId}}`;
-            const pageKey = `ga4_last_page_${{measurementId}}`;
-
-            window.dataLayer = window.dataLayer || [];
-            function gtag() {{ dataLayer.push(arguments); }}
-
-            function getTopLocation() {{
-              try {{
-                return window.parent.location.href;
-              }} catch (error) {{
-                return window.location.href;
-              }}
-            }}
-
-            function buildPageData() {{
-              const href = getTopLocation();
-              try {{
-                const url = new URL(href);
-                return {{
-                  page_location: href,
-                  page_path: `${{url.pathname}}${{url.search}}`,
-                  page_title: document.title || "Streamlit App"
-                }};
-              }} catch (error) {{
-                return {{
-                  page_location: href,
-                  page_path: href,
-                  page_title: document.title || "Streamlit App"
-                }};
-              }}
-            }}
-
-            const pageData = buildPageData();
-
-            if (!sessionStorage.getItem(initKey)) {{
-              gtag('js', new Date());
-              gtag('config', measurementId, pageData);
-              sessionStorage.setItem(initKey, 'true');
-              sessionStorage.setItem(pageKey, pageData.page_path);
-              return;
-            }}
-
-            const previousPage = sessionStorage.getItem(pageKey);
-            if (previousPage !== pageData.page_path) {{
-              gtag('event', 'page_view', pageData);
-              sessionStorage.setItem(pageKey, pageData.page_path);
-            }}
-          }})();
-        </script>
-      </body>
-    </html>
-    """
-   def inject_google_analytics(measurement_id: str):
     ga_code = f"""
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id={measurement_id}"></script>
@@ -82,17 +25,18 @@ def inject_google_analytics(measurement_id: str) -> None:
       window.dataLayer = window.dataLayer || [];
       function gtag(){{dataLayer.push(arguments);}}
       gtag('js', new Date());
-      gtag('config', '{measurement_id}', {{'debug_mode': true}});
+      gtag('config', '{measurement_id}', {{
+        'debug_mode': true,
+        'send_page_view': true
+      }});
     </script>
     """
-    st.html(ga_code, unsafe_allow_javascript=True)
 
-from data_loader import PreferenceFileError, load_model_from_excel
-from election_engine import (
-    SimulationParameters,
-    run_monte_carlo,
-    run_single_simulation,
-)
+    if hasattr(st, "html"):
+        st.html(ga_code, unsafe_allow_javascript=True)
+    else:
+        components.html(ga_code, height=0, width=0)
+
 
 st.set_page_config(page_title="არჩევნების სიმულატორი", page_icon="🗳️", layout="wide")
 inject_google_analytics(GA_MEASUREMENT_ID)
