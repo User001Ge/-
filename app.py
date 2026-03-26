@@ -74,7 +74,18 @@ def inject_google_analytics(measurement_id: str) -> None:
       </body>
     </html>
     """
-   st.html(ga_code, unsafe_allow_javascript=True)
+   def inject_google_analytics(measurement_id: str):
+    ga_code = f"""
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id={measurement_id}"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){{dataLayer.push(arguments);}}
+      gtag('js', new Date());
+      gtag('config', '{measurement_id}', {{'debug_mode': true}});
+    </script>
+    """
+    st.html(ga_code, unsafe_allow_javascript=True)
 
 from data_loader import PreferenceFileError, load_model_from_excel
 from election_engine import (
