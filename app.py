@@ -212,7 +212,7 @@ def render_probability_chart(
     plt.close(fig)
 
 
-st.title("საარჩევნო სიმულატორი")
+st.title("ვინ გახდება პატრიარხი?")
 st.caption("აპლიკაცია მონაცემებს ავტომატურად კითხულობს repo-ში შენახული Excel ფაილიდან და თითო არჩევნებში იყენებს ზუსტად 3 კანდიდატს.")
 
 if not DATA_FILE.exists():
