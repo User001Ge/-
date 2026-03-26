@@ -60,32 +60,32 @@ st.markdown(
     }
 
     .winner-card {
-        background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
-        border: 2px solid #fb923c;
+        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+        border: 2px solid #22c55e;
         border-radius: 16px;
         padding: 18px 20px;
         margin-bottom: 16px;
-        box-shadow: 0 4px 14px rgba(251, 146, 60, 0.18);
+        box-shadow: 0 4px 14px rgba(34, 197, 94, 0.18);
     }
 
     .winner-label {
         font-size: 0.9rem;
         font-weight: 600;
-        color: #9a3412;
+        color: #166534;
         margin-bottom: 6px;
     }
 
     .winner-name {
         font-size: 1.8rem;
         font-weight: 800;
-        color: #7c2d12;
+        color: #14532d;
         line-height: 1.15;
     }
 
     .winner-subtext {
         margin-top: 8px;
         font-size: 0.95rem;
-        color: #9a3412;
+        color: #166534;
     }
     </style>
     """,
@@ -222,10 +222,6 @@ except Exception as exc:
     st.error(f"ფაილის წაკითხვა ვერ მოხერხდა: {exc}")
     st.stop()
 
-st.success(
-    f"მონაცემები ავტომატურად ჩაიტვირთა: {len(model.candidates)} კანდიდატი, {len(model.electors)} ამომრჩეველი."
-)
-
 with st.sidebar:
     st.header("პარამეტრები")
     st.caption(f"მონაცემთა ფაილი: {DATA_FILE.name}")
@@ -243,7 +239,7 @@ with st.sidebar:
         iterations = st.number_input("იტერაციების რაოდენობა", min_value=1, max_value=200_000, value=100, step=500)
         volatility_level = st.slider("რყევადობის დონე", min_value=0, max_value=10, value=3)
         elector_absence_pct = st.slider("ამომრჩევლის გაცდენის შანსი (%)", min_value=0, max_value=100, value=5)
-        candidate_absence_pct = st.slider("კანდიდატის გაცდენის შანსი (%)", min_value=0, max_value=100, value=2)
+        candidate_absence_pct = st.slider("კანდიდატის გაცდენის შანსი (%)", min_value=0, max_value=100, value=0)
         rng_seed_text = st.text_input("Seed (სურვილისამებრ, გამეორებადი შედეგებისთვის)", value="")
 
         submitted = st.form_submit_button("სიმულაციის გაშვება", use_container_width=True)
@@ -330,7 +326,7 @@ fr_col3.metric(
 )
 
 first_vote_df = totals_to_df(first_round["vote_totals"])
-left, right = st.columns([0.9, 1.3])
+left, right = st.columns([0.95, 1.05])
 with left:
     st.table(first_vote_df.set_index("კანდიდატი"))
 with right:
@@ -340,8 +336,8 @@ with right:
         "ხმები",
         "პირველი ტურის ხმები",
         y_max=MAX_VOTERS,
-        bar_width=0.58,
-        figsize=(7.2, 4.2),
+        bar_width=0.54,
+        figsize=(5.8, 3.7),
     )
 
 if single_result["runoff_required"]:
@@ -356,7 +352,7 @@ if single_result["runoff_required"]:
         ro_col1.metric("მეორე ტურის ვალიდური ხმები", runoff["valid_votes"])
         ro_col2.metric("მეორე ტურის შედეგი", single_result["winner"])
 
-        left, right = st.columns([0.85, 1.15])
+        left, right = st.columns([0.92, 1.00])
         with left:
             st.table(runoff_df.set_index("კანდიდატი"))
         with right:
@@ -366,8 +362,8 @@ if single_result["runoff_required"]:
                 "ხმები",
                 "მეორე ტურის ხმები",
                 y_max=max(float(runoff_df["ხმები"].max()) + 1, 1),
-                bar_width=0.52,
-                figsize=(6.4, 3.9),
+                bar_width=0.48,
+                figsize=(5.2, 3.4),
             )
 
 st.subheader("საბოლოო გამარჯვების ალბათობები")
