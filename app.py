@@ -74,28 +74,54 @@ def totals_to_df(vote_totals: dict[str, int], value_label: str = "ხმებ�
     return pd.DataFrame({"კანდიდატი": list(vote_totals.keys()), value_label: list(vote_totals.values())})
 
 
-def render_bar_chart(df: pd.DataFrame, category_col: str, value_col: str, title: str):
-    fig, ax = plt.subplots(figsize=(5.5, 3.5))
+def render_bar_chart(
+    df: pd.DataFrame,
+    category_col: str,
+    value_col: str,
+    title: str,
+    y_max: float | None = None,
+    bar_width: float = 0.5,
+):
+    fig, ax = plt.subplots(figsize=(5.5, 3.5), dpi=120)
     colors = BAR_COLORS[: len(df)]
-    bars = ax.bar(df[category_col], df[value_col], color=colors)
+    bars = ax.bar(df[category_col], df[value_col], color=colors, width=bar_width)
+
     ax.set_title(title)
     ax.set_xlabel(category_col)
     ax.set_ylabel(value_col)
-    ax.set_ylim(0, max(df[value_col].max() + 1, 1))
+
+    if y_max is not None:
+        ax.set_ylim(0, y_max)
+        label_offset = max(y_max * 0.01, 0.15)
+    else:
+        computed_y_max = max(float(df[value_col].max()) + 1, 1)
+        ax.set_ylim(0, computed_y_max)
+        label_offset = max(computed_y_max * 0.01, 0.05)
+
+    ax.margins(x=0.15)
     plt.xticks(rotation=25, ha="right")
 
+    upper_limit = ax.get_ylim()[1]
     for bar, value in zip(bars, df[value_col]):
+        label_y = value + label_offset
+        va = "bottom"
+
+        if label_y >= upper_limit:
+            label_y = value - label_offset
+            va = "top"
+
         ax.text(
             bar.get_x() + bar.get_width() / 2,
-            bar.get_height() + 0.05,
+            label_y,
             f"{value}",
             ha="center",
-            va="bottom",
+            va=va,
             fontsize=9,
         )
 
     fig.tight_layout()
-    st.pyplot(fig, clear_figure=True)
+    st.pyplot(fig)
+    plt.close(fig)
 
 
 st.title("საარჩევნო სიმულატორი")
@@ -211,7 +237,14 @@ left, right = st.columns([1, 1])
 with left:
     st.dataframe(first_vote_df, use_container_width=True, hide_index=True)
 with right:
-    render_bar_chart(first_vote_df, "კანდიდატი", "ხმები", "პირველი ტურის ხმები")
+    render_bar_chart(
+        first_vote_df,
+        "კანდიდატი",
+        "ხმები",
+        "პირველი ტურის ხმები",
+        y_max=39,
+        bar_width=0.45,
+    )
 
 if single_result["runoff_required"]:
     st.markdown("### მეორე ტური")
@@ -228,7 +261,13 @@ if single_result["runoff_required"]:
         with left:
             st.dataframe(runoff_df, use_container_width=True, hide_index=True)
         with right:
-            render_bar_chart(runoff_df, "კანდიდატი", "ხმები", "მეორე ტურის ხმები")
+            render_bar_chart(
+                runoff_df,
+                "კანდიდატი",
+                "ხმები",
+                "მეორე ტურის ხმები",
+                bar_width=0.45,
+            )
 
 st.subheader("საბოლოო გამარჯვების ალბათობები")
 probabilities_df = monte_carlo_result["probabilities_df"]
@@ -237,7 +276,13 @@ for col, (_, row) in zip(metrics_cols, probabilities_df.iterrows()):
     col.metric(row["შედეგი"], f"{row['მოგების ალბათობა (%)']:.2f}%")
 
 st.dataframe(probabilities_df, use_container_width=True, hide_index=True)
-render_bar_chart(probabilities_df, "შედეგი", "მოგების ალბათობა (%)", "საბოლოო გამარჯვების ალბათობები")
+render_bar_chart(
+    probabilities_df,
+    "შედეგი",
+    "მოგების ალბათობა (%)",
+    "საბოლოო გამარჯვების ალბათობები",
+    bar_width=0.45,
+)
 
 st.subheader("Monte Carlo დამატებითი მაჩვენებლები")
 mc1, mc2 = st.columns(2)
@@ -247,12 +292,24 @@ mc2.metric("მეორე ტურის დანიშვნის სი�
 st.markdown("### პირველივე ტურში გამარჯვების ალბათობა")
 first_round_win_df = monte_carlo_result["first_round_win_df"]
 st.dataframe(first_round_win_df, use_container_width=True, hide_index=True)
-render_bar_chart(first_round_win_df, "კანდიდატი", "პირველივე ტურში გამარჯვება (%)", "პირველივე ტურში გამარჯვების ალბათობა")
+render_bar_chart(
+    first_round_win_df,
+    "კანდიდატი",
+    "პირველივე ტურში გამარჯვება (%)",
+    "პირველივე ტურში გამარჯვების ალბათობა",
+    bar_width=0.45,
+)
 
 st.markdown("### პირველი ტურის საშუალო ხმები და მეორე ტურში გასვლის სიხშირე")
 avg_votes_df = monte_carlo_result["average_votes_df"]
 st.dataframe(avg_votes_df, use_container_width=True, hide_index=True)
-render_bar_chart(avg_votes_df, "კანდიდატი", "პირველი ტურის საშუალო ხმები", "პირველი ტურის საშუალო ხმები")
+render_bar_chart(
+    avg_votes_df,
+    "კანდიდატი",
+    "პირველი ტურის საშუალო ხმები",
+    "პირველი ტურის საშუალო ხმები",
+    bar_width=0.45,
+)
 
 with st.expander("პირველი ტურის სრული ცხრილი"):
     st.dataframe(first_round["details_df"], use_container_width=True, hide_index=True)
