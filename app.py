@@ -1,3 +1,4 @@
+from __future__ import annotations
 import streamlit as st
 import streamlit.components.v1 as components
 
@@ -11,7 +12,7 @@ ga_tracking_code = """
 </script>
 """
 components.html(ga_tracking_code, width=0, height=0)
-from __future__ import annotations
+
 
 from pathlib import Path
 
